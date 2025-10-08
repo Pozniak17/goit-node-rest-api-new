@@ -77,21 +77,15 @@ async function addContact(name, email, phone) {
   return newContacts;
 }
 
-async function updateContact(contactId, contactData) {
-  const contacts = await readContacts();
-  const index = contacts.findIndex((contact) => contact.id === contactId);
-
+async function updateContact(id, data) {
+  const contacts = await listContacts();
+  const index = contacts.findIndex((item) => item.id === id);
   if (index === -1) {
     return null;
   }
-
-  const updatedContact = { id: contactId, ...contactData };
-
-  //* варіант 2, мутація
+  const updatedContact = { ...contacts[index], ...data };
   contacts[index] = updatedContact;
-
   await writeContacts(contacts);
-
   return updatedContact;
 }
 
