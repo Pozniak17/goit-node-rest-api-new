@@ -13,6 +13,7 @@ app.use(express.json());
 
 app.use("/api/contacts", contactsRouter);
 
+// для неіснуючих маршрутів взагалі GET /api/wrongpath або POST /api/contacts123
 app.use((_, res) => {
   res.status(404).json({ message: "Route not found" });
 });
