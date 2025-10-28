@@ -3,6 +3,7 @@ import morgan from "morgan";
 import cors from "cors";
 
 import contactsRouter from "./routes/contactsRouter.js";
+import "./server.js";
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use("/api/contacts", contactsRouter);
 
+// для неіснуючих маршрутів взагалі GET /api/wrongpath або POST /api/contacts123
 app.use((_, res) => {
   res.status(404).json({ message: "Route not found" });
 });
