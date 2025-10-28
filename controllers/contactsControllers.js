@@ -1,81 +1,112 @@
-import HttpError from "../helpers/HttpError.js";
+import Contact from "../models/contact.js";
 import {
   createContactSchema,
   updateContactSchema,
 } from "../schemas/contactsSchemas.js";
-import contactsService from "../services/contactsServices.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
-    const data = await contactsService.listContacts();
-    res.status(200).send(data);
+    const contacts = await Contact.find();
+    res.send(contacts);
   } catch (error) {
     next(error);
   }
 };
 
 export const getOneContact = async (req, res, next) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
+    const contact = await Contact.findById(id); //повертає документ або null
 
-    const data = await contactsService.getContactById(id);
-    if (!data) {
-      throw HttpError(404);
+    if (contact === null) {
+      return res.status(400).send("Contact not found");
     }
 
-    res.status(200).send(data);
+    res.send(contact);
   } catch (error) {
     next(error);
   }
 };
 
-export const deleteContact = async (req, res) => {
+export const deleteContact = async (req, res, next) => {
+  const { id } = req.params;
+
   try {
-    const { id } = req.params;
-    const data = await contactsService.removeContact(id);
-    if (!data) {
-      throw HttpError(404);
+    const result = await Contact.findByIdAndDelete(id);
+    if (result === null) {
+      return res.status(404).send("Contact not found");
     }
-    res.status(200).send(data);
+
+    res.send({ id });
   } catch (error) {
     next(error);
   }
 };
 
 export const createContact = async (req, res, next) => {
+  const { error, value } = createContactSchema.validate(req.body, {
+    convert: false,
+  });
+
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+
   try {
-    const { error, value } = createContactSchema.validate(req.body);
+    const result = await Contact.create(value); //контакт який створився з id
 
-    console.log(error);
-    if (error) {
-      throw HttpError(400, error.message);
-    }
-
-    const { name, email, phone } = value;
-
-    const data = await contactsService.addContact(name, email, phone);
-    res.status(201).send(data);
+    res.status(201).send(result);
   } catch (error) {
     next(error);
   }
 };
 
 export const updateContact = async (req, res, next) => {
+  const { id } = req.params;
+
+  const { error, value } = updateContactSchema.validate(req.body, {
+    convert: false,
+  });
+
+  console.log(id);
+
+  if (error) {
+    return res.status(404).json({ message: error.message });
+  }
+
   try {
-    const { id } = req.params;
-    const { error, value } = updateContactSchema.validate(req.body);
+    const contactById = await Contact.findById(id);
+    const result = await Contact.findByIdAndUpdate(
+      id,
+      { ...contactById.toObject(), ...value },
+      { new: true }
+    );
 
-    if (error) {
-      throw HttpError(400, error.message);
-    }
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const data = await contactsService.updateContact(id, value);
+export const updateStatusContact = async (req, res, next) => {
+  const { contactId } = req.params;
+  const { favorite } = req.body;
+  const { error, value } = updateContactSchema.validate(req.body, {
+    convert: false,
+  });
 
-    if (!data) {
-      throw HttpError(404);
-    }
+  if (error) {
+    return res.status(404).json({ message: error.message });
+  }
 
-    res.status(200).send(data);
+  try {
+    const result = await Contact.findByIdAndUpdate(
+      contactId,
+      { ...value, favorite },
+      { new: true }
+    );
+
+    res.status(200).send(result);
   } catch (error) {
     next(error);
   }
