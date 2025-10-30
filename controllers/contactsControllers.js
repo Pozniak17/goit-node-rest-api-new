@@ -1,10 +1,13 @@
 import HttpError from "../helpers/HttpError.js";
+
 import Contact from "../models/contact.js";
+
 import {
   createContactSchema,
   updateContactSchema,
   updateStatusContactSchema,
 } from "../schemas/contactsSchemas.js";
+// import contactsService from "../services/contactsServices.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
@@ -16,7 +19,6 @@ export const getAllContacts = async (req, res, next) => {
 };
 
 export const getOneContact = async (req, res, next) => {
-  const { id } = req.params;
   try {
     const contact = await Contact.findById(id);
     if (!contact) {
