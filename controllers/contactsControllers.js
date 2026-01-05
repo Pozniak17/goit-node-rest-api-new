@@ -1,5 +1,6 @@
 import Contact from "../models/contact.js";
 import HttpError from "../helpers/HttpError.js";
+import user from "../models/user.js";
 // import {
 //   createContactSchema,
 //   updateContactSchema,
@@ -8,7 +9,7 @@ import HttpError from "../helpers/HttpError.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await Contact.find();
+    const contacts = await Contact.find({ owner: req.user.id });
 
     res.status(200).send(contacts);
   } catch (error) {
@@ -19,8 +20,8 @@ export const getAllContacts = async (req, res, next) => {
 export const getOneContact = async (req, res, next) => {
   const { id } = req.params;
   try {
-    const contact = await Contact.findById(id);
-    if (!contact) {
+    const contact = await Contact.findOne({ _id: id, owner: req.user.id });
+    if (contact === null) {
       throw HttpError(404);
     }
 
@@ -46,15 +47,22 @@ export const deleteContact = async (req, res, next) => {
 };
 
 export const createContact = async (req, res, next) => {
-  const result = await Contact.create(req.body);
+  const contact = {
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone,
+    favorite: req.body.favorite,
+    owner: req.user.id, //нове поле, яке ми витягуємо з req.user.id, це ті що decode
+  };
+
   // const { error } = createContactSchema.validate(req.body);
 
   try {
     // if (error) {
     //   throw HttpError(400, error.message);
     // }
-
-    if (!result) {
+    const result = await Contact.create(contact);
+    if (result === null) {
       throw HttpError(404);
     }
 
@@ -69,13 +77,17 @@ export const updateContact = async (req, res, next) => {
   // const { error } = updateContactSchema.validate(req.body);
 
   try {
-    const result = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+    const result = await Contact.findOneAndUpdate(
+      { _id: id, owner: req.user.id },
+      req.body,
+      { new: true }
+    );
 
     // if (error) {
     //   throw HttpError(400, error.message);
     // }
 
-    if (!result) {
+    if (result === null) {
       throw HttpError(404);
     }
 
@@ -92,8 +104,8 @@ export const updateStatusContact = async (req, res, next) => {
   // const { error } = updateStatusContactSchema.validate(req.body);
 
   try {
-    const result = await Contact.findByIdAndUpdate(
-      id,
+    const result = await Contact.findOneAndUpdate(
+      { _id: id, owner: req.user.id },
       { favorite },
       { new: true }
     );
@@ -102,7 +114,7 @@ export const updateStatusContact = async (req, res, next) => {
     //   throw HttpError(400, error.message);
     // }
 
-    if (!result) {
+    if (result === null) {
       throw HttpError(404);
     }
 
