@@ -5,15 +5,18 @@ import "./db.js";
 import "dotenv/config";
 
 import contactsRouter from "./routes/contactsRouter.js";
+import usersRouter from "./routes/usersRouter.js";
+import authMiddleware from "./middleware/auth.js";
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/contacts", contactsRouter);
+app.use("/api/contacts", authMiddleware, contactsRouter);
+app.use("/users", usersRouter);
 
 // для неіснуючих маршрутів взагалі GET /api/wrongpath або POST /api/contacts123
 app.use((_, res) => {
